@@ -1,0 +1,97 @@
+<!-- rotating-pdf-viewer.html -->
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wyświetlacz planów - automatyczne przełączanie PDF</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#071129);font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .app{display:flex;flex-direction:column;height:100vh}
+    header{padding:12px 16px;color:white;display:flex;align-items:center;justify-content:space-between}
+    .title{font-size:18px;font-weight:600}
+    .controls{display:flex;gap:8px;align-items:center}
+    button{background:var(--card);border:1px solid rgba(255,255,255,0.04);color:#e6eef6;padding:8px 10px;border-radius:8px;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    main{flex:1;display:grid;grid-template-columns:260px 1fr;gap:12px;padding:12px}
+    .sidebar{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;color:#cfe7f3}
+    .sidebar h3{margin:0 0 8px 0}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .pdf-btn{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);cursor:pointer}
+    .pdf-btn.active{outline:2px solid var(--accent)}
+    .viewer{background:#fff;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+    .iframe-wrap{flex:1;display:flex}
+    iframe{border:0;width:100%;height:100%}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">Wyświetlacz planów — automatyczne przełączanie (6 roczników)</div>
+      <div class="controls">
+        <div class="small">Interwał (s)</div>
+        <input id="intervalSec" class="interval-input" type="number" min="5" value="20" />
+        <button id="playPause">Pauza</button>
+        <button id="prev">◀</button>
+        <button id="next">▶</button>
+        <button id="fullscreen">Pełny ekran</button>
+      </div>
+    </header>
+    <main>
+      <aside class="sidebar">
+        <h3>Rocznik / Szybkie wybory</h3>
+        <div class="list" id="rocznikiList"></div>
+      </aside>
+      <section class="viewer">
+        <div class="iframe-wrap">
+          <iframe id="pdfFrame" src="about:blank"></iframe>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const pdfUrls = [
+      'https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25r.pdf',
+      'https://wl.uni.opole.pl/wp-content/uploads/sites/83/03.11-07.11.2025-2.pdf',
+      'https://wl.uni.opole.pl/wp-content/uploads/sites/83/03.11-07.11.2025-3.pdf',
+      'https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25-5.pdf',
+      'https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25-4.pdf',
+      'https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25-3.pdf'
+    ];
+    const labels = ['Rocznik 1','Rocznik 2','Rocznik 3','Rocznik 4','Rocznik 5','Rocznik 6'];
+    let rotationIntervalMs = 20000;
+    let currentIndex = 0;
+    let timer = null;
+    let playing = true;
+    const iframe = document.getElementById('pdfFrame');
+    const rocznikiList = document.getElementById('rocznikiList');
+    function buildList(){
+      rocznikiList.innerHTML = '';
+      pdfUrls.forEach((u,i)=>{
+        const el = document.createElement('div');
+        el.className = 'pdf-btn';
+        el.innerHTML = `<div>${labels[i]}</div><div class='small'>${u.split('/').pop()}</div>`;
+        el.addEventListener('click',()=>{gotoIndex(i,false)});
+        rocznikiList.appendChild(el);
+      });
+    }
+    function highlightActive(){
+      Array.from(rocznikiList.children).forEach((ch,idx)=>ch.classList.toggle('active', idx===currentIndex));
+    }
+    function showIndex(i){
+      iframe.src = pdfUrls[i];
+      highlightActive();
+    }
+    function gotoIndex(i,resume=true){
+      currentIndex = (i + pdfUrls.length) % pdfUrls.length;
+      showIndex(currentIndex);
+      if(resume) restartTimer();
+    }
+    function next(){ gotoIndex(currentIndex+1); }
+    function restartTimer(){ clearTimer(); if(playing){ timer=setInterval(next,rotationIntervalMs);} }
+    function clearTimer(){ if(timer){clearInterval(timer);timer=null;} }
+    buildList(); showIndex(0); restartTimer();
+  </script>
+</body>
+</html>
