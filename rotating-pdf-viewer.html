@@ -15,6 +15,7 @@
       align-items: center;
       overflow: hidden;
       font-family: "Inter", sans-serif;
+      cursor: none;
     }
 
     #pdfCanvas {
@@ -54,6 +55,13 @@
       font-size: 14px;
       z-index: 10;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    #controls.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     button {
@@ -102,20 +110,19 @@
 
     const canvas = document.getElementById("pdfCanvas");
     const ctx = canvas.getContext("2d");
-    ctx.imageSmoothingEnabled = true;
-    canvas.style.imageRendering = "auto";
-
     const infoBar = document.getElementById("infoBar");
     const intervalInput = document.getElementById("intervalInput");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const controls = document.getElementById("controls");
 
     let currentIndex = 0;
     let rotationTimer;
+    let hideTimer;
 
     async function renderPDF(file) {
       try {
         infoBar.textContent = `Wczytywanie: ${file.label}...`;
-        const pdf = await pdfjsLib.getDocument(file.url).promise;
+        const pdf = await pdfjsLib.getDocument(file.url + "?v=" + Date.now()).promise; // cache-bypass
         const page = await pdf.getPage(1);
         const scale = Math.min(window.innerWidth / page.view[2], window.innerHeight / page.view[3]) * 1.5;
         const viewport = page.getViewport({ scale });
@@ -144,7 +151,12 @@
       clearInterval(rotationTimer);
       renderPDF(pdfFiles[currentIndex]);
       rotationTimer = setInterval(() => {
-        currentIndex = (currentIndex + 1) % pdfFiles.length;
+        currentIndex++;
+        if (currentIndex >= pdfFiles.length) {
+          // 🔁 po zakończeniu całego cyklu – odśwież stronę
+          location.reload();
+          return;
+        }
         renderPDF(pdfFiles[currentIndex]);
       }, intervalInput.value * 1000);
     }
@@ -172,10 +184,25 @@
       }
     });
 
+    // 🔸 Automatyczne ukrywanie panelu sterowania
+    function resetHideTimer() {
+      controls.classList.remove("hidden");
+      document.body.style.cursor = "default";
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        controls.classList.add("hidden");
+        document.body.style.cursor = "none";
+      }, 10000);
+    }
+
+    document.addEventListener("mousemove", resetHideTimer);
+    document.addEventListener("touchstart", resetHideTimer);
+
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
     startRotation();
+    resetHideTimer();
     window.addEventListener("resize", () => renderPDF(pdfFiles[currentIndex]));
   </script>
 </body>
