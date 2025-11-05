@@ -1,175 +1,248 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Plany zajęć</title>
-<style>
-  body {
-    margin: 0;
-    background-color: #111;
-    color: white;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plany zajęć — Roczniki I–VI + WCSM</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background-color: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      cursor: none;
+    }
 
-  iframe {
-    width: 100vw;
-    height: 100vh;
-    border: none;
-  }
+    #pdfCanvas {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background-color: #1e293b;
+    }
 
-  .year-buttons {
-    position: fixed;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 20;
-  }
+    #infoBar {
+      position: fixed;
+      top: 20px;
+      right: 25px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      z-index: 20;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    }
 
-  .year-buttons button {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    font-size: 12px;
-    padding: 4px 6px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      right: 25px;
+      background: rgba(255,255,255,0.1);
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      z-index: 10;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
 
-  .year-buttons button:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
+    #controls.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-  .controls {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    display: flex;
-    gap: 6px;
-    z-index: 30;
-  }
+    #yearButtons {
+      position: fixed;
+      top: 80px;
+      right: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 15;
+      transition: opacity 0.5s ease;
+    }
 
-  .controls button {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    font-size: 12px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
+    #yearButtons.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-  .controls button:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
+    button {
+      background-color: #06b6d4;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #0891b2; }
 
-  .label {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: rgba(255,255,255,0.1);
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-    z-index: 15;
-  }
-</style>
+    .smallBtn {
+      font-size: 13px;
+      padding: 5px 8px;
+      background-color: #334155;
+    }
+    .smallBtn:hover { background-color: #475569; }
+
+    input[type="number"] {
+      width: 50px;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #64748b;
+      background: #1e293b;
+      color: #e2e8f0;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
+  <canvas id="pdfCanvas"></canvas>
+  <div id="infoBar">Wczytywanie...</div>
 
-<div class="label" id="yearLabel">Rok I</div>
-<iframe id="pdfFrame" src="pdf/1.pdf"></iframe>
+  <div id="yearButtons">
+    <button class="smallBtn" data-index="0">Rok I</button>
+    <button class="smallBtn" data-index="1">Rok II</button>
+    <button class="smallBtn" data-index="2">Rok III</button>
+    <button class="smallBtn" data-index="3">Rok IV</button>
+    <button class="smallBtn" data-index="4">Rok V</button>
+    <button class="smallBtn" data-index="5">Rok VI</button>
+    <button class="smallBtn" data-index="6">WCSM</button>
+  </div>
 
-<div class="year-buttons">
-  <button onclick="jumpTo(0)">Rok I</button>
-  <button onclick="jumpTo(1)">Rok II</button>
-  <button onclick="jumpTo(2)">Rok III</button>
-  <button onclick="jumpTo(3)">Rok IV</button>
-  <button onclick="jumpTo(4)">Rok V</button>
-  <button onclick="jumpTo(5)">Rok VI</button>
-  <button onclick="jumpTo(6)">WCSM</button>
-</div>
+  <div id="controls">
+    <label>Int.:</label>
+    <input type="number" id="intervalInput" value="20" min="5" />
+    <button id="pauseBtn">⏸️ Pauza</button>
+    <button id="fullscreenBtn">⛶ Pełny ekran</button>
+  </div>
 
-<div class="controls">
-  <button id="pauseBtn" onclick="togglePause()">⏸</button>
-  <button onclick="toggleFullScreen()">⛶</button>
-  <button onclick="changeInterval()">int.</button>
-</div>
+  <script>
+    const pdfFiles = [
+      { url: "pdf/1.pdf", label: "Rok I" },
+      { url: "pdf/2.pdf", label: "Rok II" },
+      { url: "pdf/3.pdf", label: "Rok III" },
+      { url: "pdf/4.pdf", label: "Rok IV" },
+      { url: "pdf/5.pdf", label: "Rok V" },
+      { url: "pdf/6.pdf", label: "Rok VI" },
+      { url: "pdf/wcsm.pdf", label: "WCSM 1–6" }
+    ];
 
-<script>
-  const pdfs = [
-    { url: "pdf/1.pdf", label: "Rok I" },
-    { url: "pdf/2.pdf", label: "Rok II" },
-    { url: "pdf/3.pdf", label: "Rok III" },
-    { url: "pdf/4.pdf", label: "Rok IV" },
-    { url: "pdf/5.pdf", label: "Rok V" },
-    { url: "pdf/6.pdf", label: "Rok VI" },
-    { url: "pdf/wcsm.pdf", label: "WCSM 1–6" }
-  ];
+    const canvas = document.getElementById("pdfCanvas");
+    const ctx = canvas.getContext("2d");
+    const infoBar = document.getElementById("infoBar");
+    const intervalInput = document.getElementById("intervalInput");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const controls = document.getElementById("controls");
+    const yearButtons = document.getElementById("yearButtons");
 
-  let index = 0;
-  let intervalTime = 20000;
-  let paused = false;
-  let timer;
+    let currentIndex = 0;
+    let rotationTimer;
+    let hideTimer;
+    let paused = false;
 
-  const frame = document.getElementById("pdfFrame");
-  const label = document.getElementById("yearLabel");
-  const pauseBtn = document.getElementById("pauseBtn");
+    async function renderPDF(file) {
+      try {
+        infoBar.textContent = `Wczytywanie: ${file.label}...`;
+        const pdf = await pdfjsLib.getDocument(file.url + "?v=" + Date.now()).promise;
+        const page = await pdf.getPage(1);
+        const scale = Math.min(window.innerWidth / page.view[2], window.innerHeight / page.view[3]) * 1.5;
+        const viewport = page.getViewport({ scale });
 
-  function showPDF(i) {
-    index = i;
-    frame.src = pdfs[index].url;
-    label.textContent = pdfs[index].label;
-  }
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-  function nextPDF() {
-    if (!paused) {
-      index = (index + 1) % pdfs.length;
-      showPDF(index);
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const renderContext = { canvasContext: ctx, viewport };
+        await page.render(renderContext).promise;
+        infoBar.textContent = file.label;
+      } catch (e) {
+        console.error("Błąd PDF:", e);
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#f87171";
+        ctx.font = "20px sans-serif";
+        ctx.fillText("Nie można wczytać PDF: " + file.label, 30, 100);
+        infoBar.textContent = `Błąd ładowania: ${file.label}`;
+      }
     }
-  }
 
-  function startCycle() {
-    clearInterval(timer);
-    timer = setInterval(nextPDF, intervalTime);
-  }
-
-  function togglePause() {
-    paused = !paused;
-    pauseBtn.textContent = paused ? "▶️" : "⏸";
-  }
-
-  function changeInterval() {
-    const newInt = prompt("Podaj nowy interwał (sekundy):", intervalTime / 1000);
-    if (newInt && !isNaN(newInt)) {
-      intervalTime = parseInt(newInt) * 1000;
-      startCycle();
+    function startRotation() {
+      clearInterval(rotationTimer);
+      renderPDF(pdfFiles[currentIndex]);
+      rotationTimer = setInterval(() => {
+        if (!paused) {
+          currentIndex++;
+          if (currentIndex >= pdfFiles.length) currentIndex = 0; // restart bez reloadu
+          renderPDF(pdfFiles[currentIndex]);
+        }
+      }, intervalInput.value * 1000);
     }
-  }
 
-  function toggleFullScreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(console.error);
-    } else {
-      document.exitFullscreen();
+    pauseBtn.addEventListener("click", () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? "▶️ Start" : "⏸️ Pauza";
+    });
+
+    document.querySelectorAll(".smallBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentIndex = parseInt(btn.dataset.index);
+        renderPDF(pdfFiles[currentIndex]);
+      });
+    });
+
+    intervalInput.addEventListener("change", startRotation);
+
+    fullscreenBtn.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.body.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (err) {
+        console.error("Błąd pełnego ekranu:", err);
+      }
+    });
+
+    function resetHideTimer() {
+      controls.classList.remove("hidden");
+      yearButtons.classList.remove("hidden");
+      document.body.style.cursor = "default";
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        controls.classList.add("hidden");
+        yearButtons.classList.add("hidden");
+        document.body.style.cursor = "none";
+      }, 10000);
     }
-  }
 
-  function jumpTo(i) {
-    showPDF(i);
-    clearInterval(timer);
-    startCycle();
-  }
+    document.addEventListener("mousemove", resetHideTimer);
+    document.addEventListener("touchstart", resetHideTimer);
 
-  // Po pełnym cyklu restart bez reloadu:
-  startCycle();
-</script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
+    startRotation();
+    resetHideTimer();
+    window.addEventListener("resize", () => renderPDF(pdfFiles[currentIndex]));
+  </script>
 </body>
 </html>
