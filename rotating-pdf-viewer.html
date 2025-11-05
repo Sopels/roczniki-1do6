@@ -3,38 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Roczniki 1–6 — Plan zajęć (PDF.js)</title>
+  <title>Roczniki 1–6 — Plan zajęć</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     html, body {
       margin: 0;
       height: 100%;
       background-color: #0f172a;
-      color: white;
-      overflow: hidden;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
+      flex-direction: column;
+      overflow: hidden;
       font-family: "Inter", sans-serif;
     }
     #pdfCanvas {
       max-width: 95vw;
       max-height: 90vh;
+      background-color: white;
       border-radius: 12px;
       box-shadow: 0 0 20px rgba(0,0,0,0.4);
-      background-color: white;
     }
     #controls {
       position: fixed;
       top: 10px;
       left: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
       background: rgba(0,0,0,0.4);
-      padding: 6px 12px;
+      color: white;
+      padding: 8px 12px;
       border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
     }
     button {
       background-color: #06b6d4;
@@ -65,13 +66,14 @@
   </div>
 
   <script>
+    // 📁 Umieść swoje pliki PDF w folderze "pdf" w repozytorium GitHub
     const pdfUrls = [
-      "https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25r.pdf",
-      "https://wl.uni.opole.pl/wp-content/uploads/sites/83/03.11-07.11.2025-2.pdf",
-      "https://wl.uni.opole.pl/wp-content/uploads/sites/83/03.11-07.11.2025-3.pdf",
-      "https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25-5.pdf",
-      "https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25-4.pdf",
-      "https://wl.uni.opole.pl/wp-content/uploads/sites/83/03-07.11.25-3.pdf"
+      "pdf/03-07.11.25r.pdf",
+      "pdf/03.11-07.11.2025-2.pdf",
+      "pdf/03.11-07.11.2025-3.pdf",
+      "pdf/03-07.11.25-5.pdf",
+      "pdf/03-07.11.25-4.pdf",
+      "pdf/03-07.11.25-3.pdf"
     ];
 
     const canvas = document.getElementById("pdfCanvas");
@@ -97,10 +99,12 @@
         };
         await page.render(renderContext).promise;
       } catch (e) {
-        console.error("Błąd wczytywania PDF:", e);
+        console.error("Błąd PDF:", e);
         ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "red";
         ctx.font = "20px sans-serif";
-        ctx.fillText("Błąd wczytywania pliku PDF", 50, 100);
+        ctx.fillText("Nie można wczytać PDF: " + url, 30, 100);
       }
     }
 
@@ -123,11 +127,8 @@
       }
     });
 
-    // Inicjalizacja
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     startRotation();
   </script>
 </body>
-</html>
-
 </html>
