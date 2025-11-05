@@ -24,9 +24,10 @@
       background-color: white;
     }
 
+    /* 🟦 Napis "Rok X" w prawym górnym rogu */
     #infoBar {
       position: fixed;
-      bottom: 20px;
+      top: 20px;
       right: 25px;
       background: rgba(0, 0, 0, 0.6);
       color: white;
@@ -36,12 +37,14 @@
       font-weight: 600;
       letter-spacing: 0.5px;
       pointer-events: none;
+      z-index: 20;
     }
 
+    /* 🔧 Panel z kontrolkami w prawym dolnym rogu */
     #controls {
       position: fixed;
-      top: 10px;
-      left: 10px;
+      bottom: 20px;
+      right: 25px;
       background: rgba(0,0,0,0.4);
       color: white;
       padding: 8px 12px;
@@ -66,12 +69,13 @@
     button:hover { background-color: #0891b2; }
 
     input[type="number"] {
-      width: 60px;
+      width: 50px;
       padding: 4px;
       border-radius: 6px;
       border: 1px solid #555;
       background: #1e293b;
       color: white;
+      text-align: center;
     }
   </style>
 </head>
@@ -80,7 +84,7 @@
   <div id="infoBar">Wczytywanie...</div>
 
   <div id="controls">
-    <label>Interwał (s):</label>
+    <label>Int.:</label>
     <input type="number" id="intervalInput" value="20" min="5" />
     <button id="fullscreenBtn">Pełny ekran</button>
   </div>
@@ -172,3 +176,4 @@
   </script>
 </body>
 </html>
+
