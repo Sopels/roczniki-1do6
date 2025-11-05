@@ -3,42 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Roczniki 1–6 — Plan zajęć</title>
+  <title>Plany zajęć — Roczniki 1–6</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     html, body {
       margin: 0;
       height: 100%;
-      background-color: #0f172a;
+      background-color: #f1f5f9;
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
       overflow: hidden;
       font-family: "Inter", sans-serif;
     }
+
     #pdfCanvas {
       width: 100vw;
       height: 100vh;
       object-fit: contain;
       background-color: white;
     }
+
     #infoBar {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
+      bottom: 20px;
+      right: 25px;
       background: rgba(0, 0, 0, 0.6);
       color: white;
-      text-align: center;
+      padding: 6px 12px;
+      border-radius: 12px;
       font-size: 1.2rem;
-      padding: 8px;
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: 0.5px;
     }
+
     #controls {
       position: fixed;
-      bottom: 10px;
+      top: 10px;
       left: 10px;
       background: rgba(0,0,0,0.4);
       color: white;
@@ -49,6 +50,7 @@
       gap: 8px;
       font-size: 14px;
     }
+
     button {
       background-color: #06b6d4;
       border: none;
@@ -59,6 +61,7 @@
       font-size: 14px;
     }
     button:hover { background-color: #0891b2; }
+
     input[type="number"] {
       width: 60px;
       padding: 4px;
@@ -70,8 +73,8 @@
   </style>
 </head>
 <body>
-  <div id="infoBar">Wczytywanie rocznika...</div>
   <canvas id="pdfCanvas"></canvas>
+  <div id="infoBar">Wczytywanie...</div>
 
   <div id="controls">
     <label>Interwał (s):</label>
@@ -80,14 +83,14 @@
   </div>
 
   <script>
-    // 📁 Umieść swoje pliki PDF w folderze "pdf" w repozytorium GitHub
+    // 📁 Lista plików PDF i opisów
     const pdfFiles = [
-      { url: "pdf/03-07.11.25r.pdf", label: "Rocznik 1" },
-      { url: "pdf/03.11-07.11.2025-2.pdf", label: "Rocznik 2" },
-      { url: "pdf/03.11-07.11.2025-3.pdf", label: "Rocznik 3" },
-      { url: "pdf/03-07.11.25-5.pdf", label: "Rocznik 4" },
-      { url: "pdf/03-07.11.25-4.pdf", label: "Rocznik 5" },
-      { url: "pdf/03-07.11.25-3.pdf", label: "Rocznik 6" }
+      { url: "pdf/03-07.11.25r.pdf", label: "Rok 1" },
+      { url: "pdf/03.11-07.11.2025-2.pdf", label: "Rok 2" },
+      { url: "pdf/03.11-07.11.2025-3.pdf", label: "Rok 3" },
+      { url: "pdf/03-07.11.25-5.pdf", label: "Rok 4" },
+      { url: "pdf/03-07.11.25-4.pdf", label: "Rok 5" },
+      { url: "pdf/03-07.11.25-3.pdf", label: "Rok 6" }
     ];
 
     const canvas = document.getElementById("pdfCanvas");
@@ -104,7 +107,7 @@
         infoBar.textContent = `Wczytywanie: ${file.label}...`;
         const pdf = await pdfjsLib.getDocument(file.url).promise;
         const page = await pdf.getPage(1); // tylko 1. strona
-        const scale = Math.min(window.innerWidth / page.view[2], window.innerHeight / page.view[3]);
+        const scale = Math.min(window.innerWidth / page.view[2], window.innerHeight / page.view[3]) * 1.5;
         const viewport = page.getViewport({ scale: scale });
 
         canvas.width = viewport.width;
@@ -112,6 +115,7 @@
 
         const renderContext = { canvasContext: ctx, viewport: viewport };
         await page.render(renderContext).promise;
+
         infoBar.textContent = file.label;
       } catch (e) {
         console.error("Błąd PDF:", e);
