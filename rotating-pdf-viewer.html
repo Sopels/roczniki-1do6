@@ -9,7 +9,7 @@
     html, body {
       margin: 0;
       height: 100%;
-      background-color: #f1f5f9;
+      background-color: #0f172a; /* ciemne tło */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -21,16 +21,16 @@
       width: 100vw;
       height: 100vh;
       object-fit: contain;
-      background-color: white;
+      background-color: #1e293b; /* ciemny canvas */
     }
 
-    /* 🟦 Napis "Rok X" w prawym górnym rogu */
+    /* 🟣 Napis "Rok X" w prawym górnym rogu */
     #infoBar {
       position: fixed;
       top: 20px;
       right: 25px;
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
       padding: 6px 12px;
       border-radius: 12px;
       font-size: 1.2rem;
@@ -38,6 +38,7 @@
       letter-spacing: 0.5px;
       pointer-events: none;
       z-index: 20;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
     }
 
     /* 🔧 Panel z kontrolkami w prawym dolnym rogu */
@@ -45,8 +46,8 @@
       position: fixed;
       bottom: 20px;
       right: 25px;
-      background: rgba(0,0,0,0.4);
-      color: white;
+      background: rgba(255,255,255,0.1);
+      color: #e2e8f0;
       padding: 8px 12px;
       border-radius: 10px;
       display: flex;
@@ -54,6 +55,7 @@
       gap: 8px;
       font-size: 14px;
       z-index: 10;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
     }
 
     button {
@@ -72,9 +74,9 @@
       width: 50px;
       padding: 4px;
       border-radius: 6px;
-      border: 1px solid #555;
+      border: 1px solid #64748b;
       background: #1e293b;
-      color: white;
+      color: #e2e8f0;
       text-align: center;
     }
   </style>
@@ -122,14 +124,17 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
+        ctx.fillStyle = "#1e293b"; // tło canvasu pod PDF
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         const renderContext = { canvasContext: ctx, viewport };
         await page.render(renderContext).promise;
         infoBar.textContent = file.label;
       } catch (e) {
         console.error("Błąd PDF:", e);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#1e293b";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "red";
+        ctx.fillStyle = "#f87171";
         ctx.font = "20px sans-serif";
         ctx.fillText("Nie można wczytać PDF: " + file.label, 30, 100);
         infoBar.textContent = `Błąd ładowania: ${file.label}`;
@@ -176,4 +181,3 @@
   </script>
 </body>
 </html>
-
