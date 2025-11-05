@@ -47,11 +47,11 @@
       right: 25px;
       background: rgba(255,255,255,0.1);
       color: #e2e8f0;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 10px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-size: 14px;
       z-index: 10;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
@@ -60,6 +60,22 @@
     }
 
     #controls.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #yearButtons {
+      position: fixed;
+      top: 80px;
+      right: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 15;
+      transition: opacity 0.5s ease;
+    }
+
+    #yearButtons.hidden {
       opacity: 0;
       pointer-events: none;
     }
@@ -76,6 +92,13 @@
     }
     button:hover { background-color: #0891b2; }
 
+    .smallBtn {
+      font-size: 13px;
+      padding: 5px 8px;
+      background-color: #334155;
+    }
+    .smallBtn:hover { background-color: #475569; }
+
     input[type="number"] {
       width: 50px;
       padding: 4px;
@@ -91,10 +114,21 @@
   <canvas id="pdfCanvas"></canvas>
   <div id="infoBar">Wczytywanie...</div>
 
+  <div id="yearButtons">
+    <button class="smallBtn" data-index="0">Rok 1</button>
+    <button class="smallBtn" data-index="1">Rok 2</button>
+    <button class="smallBtn" data-index="2">Rok 3</button>
+    <button class="smallBtn" data-index="3">Rok 4</button>
+    <button class="smallBtn" data-index="4">Rok 5</button>
+    <button class="smallBtn" data-index="5">Rok 6</button>
+    <button class="smallBtn" data-index="6">WCSM</button>
+  </div>
+
   <div id="controls">
     <label>Int.:</label>
     <input type="number" id="intervalInput" value="20" min="5" />
-    <button id="fullscreenBtn">Pełny ekran</button>
+    <button id="pauseBtn">⏸️ Pauza</button>
+    <button id="fullscreenBtn">⛶ Pełny ekran</button>
   </div>
 
   <script>
@@ -113,16 +147,19 @@
     const infoBar = document.getElementById("infoBar");
     const intervalInput = document.getElementById("intervalInput");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
     const controls = document.getElementById("controls");
+    const yearButtons = document.getElementById("yearButtons");
 
     let currentIndex = 0;
     let rotationTimer;
     let hideTimer;
+    let paused = false;
 
     async function renderPDF(file) {
       try {
         infoBar.textContent = `Wczytywanie: ${file.label}...`;
-        const pdf = await pdfjsLib.getDocument(file.url + "?v=" + Date.now()).promise; // cache-bypass
+        const pdf = await pdfjsLib.getDocument(file.url + "?v=" + Date.now()).promise;
         const page = await pdf.getPage(1);
         const scale = Math.min(window.innerWidth / page.view[2], window.innerHeight / page.view[3]) * 1.5;
         const viewport = page.getViewport({ scale });
@@ -151,15 +188,30 @@
       clearInterval(rotationTimer);
       renderPDF(pdfFiles[currentIndex]);
       rotationTimer = setInterval(() => {
-        currentIndex++;
-        if (currentIndex >= pdfFiles.length) {
-          // 🔁 po zakończeniu całego cyklu – odśwież stronę
-          location.reload();
-          return;
+        if (!paused) {
+          currentIndex++;
+          if (currentIndex >= pdfFiles.length) {
+            location.reload(); // odświeżenie po pełnym cyklu
+            return;
+          }
+          renderPDF(pdfFiles[currentIndex]);
         }
-        renderPDF(pdfFiles[currentIndex]);
       }, intervalInput.value * 1000);
     }
+
+    // Pauza / Wznowienie
+    pauseBtn.addEventListener("click", () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? "▶️ Start" : "⏸️ Pauza";
+    });
+
+    // Ręczny wybór rocznika
+    document.querySelectorAll(".smallBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentIndex = parseInt(btn.dataset.index);
+        renderPDF(pdfFiles[currentIndex]);
+      });
+    });
 
     intervalInput.addEventListener("change", startRotation);
 
@@ -167,30 +219,23 @@
       try {
         if (!document.fullscreenElement) {
           await document.body.requestFullscreen();
-          fullscreenBtn.textContent = "Zakończ pełny ekran";
         } else {
           await document.exitFullscreen();
-          fullscreenBtn.textContent = "Pełny ekran";
         }
       } catch (err) {
         console.error("Błąd pełnego ekranu:", err);
       }
     });
 
-    document.addEventListener("fullscreenchange", () => {
-      if (!document.fullscreenElement) {
-        fullscreenBtn.textContent = "Pełny ekran";
-        renderPDF(pdfFiles[currentIndex]);
-      }
-    });
-
-    // 🔸 Automatyczne ukrywanie panelu sterowania
+    // Automatyczne ukrywanie panelu i przycisków
     function resetHideTimer() {
       controls.classList.remove("hidden");
+      yearButtons.classList.remove("hidden");
       document.body.style.cursor = "default";
       clearTimeout(hideTimer);
       hideTimer = setTimeout(() => {
         controls.classList.add("hidden");
+        yearButtons.classList.add("hidden");
         document.body.style.cursor = "none";
       }, 10000);
     }
